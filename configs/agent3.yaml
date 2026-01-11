@@ -1,1 +1,8 @@
 #agent3.yaml
+# configs/agent3.yaml
+K: 1
+n_steps: 6
+stochastic_rewards: false
+lr_actor: 1e-5
+lr_critic: 1e-3
+gamma: 0.99

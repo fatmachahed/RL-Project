@@ -1,1 +1,8 @@
 #agent1
+# configs/agent1.yaml
+K: 1
+n_steps: 1
+stochastic_rewards: true
+lr_actor: 1e-5
+lr_critic: 1e-3
+gamma: 0.99

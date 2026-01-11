@@ -1,1 +1,8 @@
 #agent4.yaml
+# configs/agent4.yaml
+K: 6
+n_steps: 6
+stochastic_rewards: false
+lr_actor: 1e-5
+lr_critic: 1e-3
+gamma: 0.99
