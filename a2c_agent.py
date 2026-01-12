@@ -1,69 +1,149 @@
-# a2c_agent.py
 import torch
+import torch.nn as nn
+import torch.optim as optim
 import torch.nn.functional as F
+from model import Actor, Critic
 
 class A2CAgent:
-    def __init__(self, model, optimizer_actor, optimizer_critic, gamma=0.99, n_steps=1, stochastic_rewards=False):
-        self.model = model
-        self.optimizer_actor = optimizer_actor
-        self.optimizer_critic = optimizer_critic
+    """Advantage Actor-Critic Agent"""
+    
+    def __init__(self, state_dim, action_dim, lr_actor=1e-5, lr_critic=1e-3, 
+                 gamma=0.99, hidden_size=64):
+        """
+        Args:
+            state_dim: Dimension of state space
+            action_dim: Dimension of action space
+            lr_actor: Learning rate for actor
+            lr_critic: Learning rate for critic
+            gamma: Discount factor
+            hidden_size: Size of hidden layers (default 64)
+        """
         self.gamma = gamma
-        self.n_steps = n_steps
-        self.stochastic_rewards = stochastic_rewards
-
-        # stocker les transitions
-        self.log_probs = []
-        self.values = []
-        self.rewards = []
-
+        self.action_dim = action_dim
+        
+        # Create actor and critic networks
+        self.actor = Actor(state_dim, action_dim, hidden_size)
+        self.critic = Critic(state_dim, hidden_size)
+        
+        # Separate optimizers
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr_actor)
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=lr_critic)
+    
     def select_action(self, state):
-        logits, value = self.model(state)
-        probs = torch.softmax(logits, dim=-1)
-        action = torch.multinomial(probs, 1).item()  # int
-        log_prob = torch.log(probs[0, action])
-
-        # Stocker log_prob et value pour update
-        self.log_probs.append(log_prob)
-        self.values.append(value)
-
-        return action, value
-
-    def store_transition(self, state, action, reward, next_state, done):
-        self.rewards.append(reward)
-
-    def compute_loss(self):
-        # calcul des retours
-        returns = []
-        R = 0
-        for r in reversed(self.rewards):
-            R = r + self.gamma * R
-            returns.insert(0, R)
-        returns = torch.tensor(returns, dtype=torch.float32)
-        values = torch.cat(self.values).squeeze()
-        log_probs = torch.stack(self.log_probs)
-
-        advantage = returns - values
-        actor_loss = -(log_probs * advantage.detach()).mean()
-        critic_loss = advantage.pow(2).mean()
-        return actor_loss, critic_loss
-
-    def update(self):
-        if len(self.rewards) == 0:
-            return 0, 0
-        actor_loss, critic_loss = self.compute_loss()
-
-        # mise à jour des paramètres
-        self.optimizer_actor.zero_grad()
+        """
+        Select action given state(s)
+        
+        Args:
+            state: Tensor of shape (batch_size, state_dim)
+        
+        Returns:
+            actions: Tensor of shape (batch_size,)
+            log_probs: Tensor of shape (batch_size,)
+            values: Tensor of shape (batch_size,)
+        """
+        # Get action logits and value
+        logits = self.actor(state)
+        value = self.critic(state).squeeze(-1)
+        
+        # Sample action from categorical distribution
+        probs = F.softmax(logits, dim=-1)
+        dist = torch.distributions.Categorical(probs)
+        action = dist.sample()
+        log_prob = dist.log_prob(action)
+        
+        return action, log_prob, value
+    
+    def select_action_greedy(self, state):
+        """
+        Select greedy action (for evaluation)
+        
+        Args:
+            state: Tensor of shape (state_dim,) or (1, state_dim)
+        
+        Returns:
+            action: Integer action
+        """
+        if state.dim() == 1:
+            state = state.unsqueeze(0)
+        
+        with torch.no_grad():
+            logits = self.actor(state)
+            action = torch.argmax(logits, dim=-1)
+        
+        return action.item()
+    
+    def update(self, batch):
+        """
+        Update actor and critic networks
+        
+        Args:
+            batch: Dictionary containing:
+                - states: (n_steps, num_workers, state_dim)
+                - actions: (n_steps, num_workers)
+                - returns: (n_steps, num_workers) - n-step returns
+                - values: (n_steps, num_workers) - old value estimates
+        
+        Returns:
+            actor_loss: Float
+            critic_loss: Float
+        """
+        # Extract batch data
+        states = torch.FloatTensor(batch['states'])
+        actions = torch.LongTensor(batch['actions'])
+        returns = torch.FloatTensor(batch['returns'])
+        old_values = torch.FloatTensor(batch['values'])
+        
+        # Flatten batch dimensions (n_steps, num_workers) -> (n_steps * num_workers)
+        n_steps, num_workers, state_dim = states.shape
+        states = states.reshape(-1, state_dim)
+        actions = actions.reshape(-1)
+        returns = returns.reshape(-1)
+        old_values = old_values.reshape(-1)
+        
+        # Forward pass
+        logits = self.actor(states)
+        values = self.critic(states).squeeze(-1)
+        
+        # Compute advantages
+        advantages = returns - values.detach()
+        
+        # Actor loss (policy gradient with advantage)
+        probs = F.softmax(logits, dim=-1)
+        dist = torch.distributions.Categorical(probs)
+        log_probs = dist.log_prob(actions)
+        
+        actor_loss = -(log_probs * advantages).mean()
+        
+        # Critic loss (MSE between predicted value and return)
+        critic_loss = F.mse_loss(values, returns)
+        
+        # Update actor
+        self.actor_optimizer.zero_grad()
         actor_loss.backward()
-        self.optimizer_actor.step()
-
-        self.optimizer_critic.zero_grad()
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=0.5)
+        self.actor_optimizer.step()
+        
+        # Update critic
+        self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        self.optimizer_critic.step()
-
-        # reset
-        self.rewards = []
-        self.log_probs = []
-        self.values = []
-
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=0.5)
+        self.critic_optimizer.step()
+        
         return actor_loss.item(), critic_loss.item()
+    
+    def save(self, path):
+        """Save model weights"""
+        torch.save({
+            'actor_state_dict': self.actor.state_dict(),
+            'critic_state_dict': self.critic.state_dict(),
+            'actor_optimizer_state_dict': self.actor_optimizer.state_dict(),
+            'critic_optimizer_state_dict': self.critic_optimizer.state_dict(),
+        }, path)
+    
+    def load(self, path):
+        """Load model weights"""
+        checkpoint = torch.load(path)
+        self.actor.load_state_dict(checkpoint['actor_state_dict'])
+        self.critic.load_state_dict(checkpoint['critic_state_dict'])
+        self.actor_optimizer.load_state_dict(checkpoint['actor_optimizer_state_dict'])
+        self.critic_optimizer.load_state_dict(checkpoint['critic_optimizer_state_dict'])
