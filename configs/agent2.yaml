@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Agent2 - (K=6, n=1, stochastique)
 name: "Agent2"
 env_name: "CartPole-v1"
@@ -11,3 +12,13 @@ max_steps: 500000
 entropy_coef: 0.01
 eval_freq: 20000
 
+=======
+#agent2.yaml
+# configs/agent2.yaml
+K: 6
+n_steps: 1
+stochastic_rewards: false
+lr_actor: 1e-5
+lr_critic: 1e-3
+gamma: 0.99
+>>>>>>> origin/aziz
