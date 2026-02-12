@@ -1,0 +1,13 @@
+# Agent2 - (K=6, n=1, stochastique)
+name: "Agent2"
+env_name: "CartPole-v1"
+K: 6
+n_steps: 1
+stochastic_rewards: true
+lr_actor: 0.00001  
+lr_critic: 0.001 
+gamma: 0.99
+max_steps: 500000
+entropy_coef: 0.01
+eval_freq: 20000
+

@@ -1,0 +1,14 @@
+# Agent4 - (K=6, n=6, stochastique) - LE MEILLEUR 
+name: "Agent4"
+env_name: "CartPole-v1"
+K: 6
+n_steps: 6
+stochastic_rewards: true
+lr_actor: 0.0003  
+lr_critic: 0.003 
+gamma: 0.99
+max_steps: 500000
+entropy_coef: 0.01
+eval_freq: 20000
+
+
