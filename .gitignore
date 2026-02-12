@@ -16,7 +16,6 @@ __pycache__/
 results/
 results_ok/
 results_valid/
-plots/
 *.npz
 *.png
 *.jpg
