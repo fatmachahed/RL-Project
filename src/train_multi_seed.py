@@ -24,7 +24,7 @@ def train(config, seed, name):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Section 3.3: K parallel workers avec Gymnasium vectorized
+    # K parallel workers avec Gymnasium vectorized
     envs = gym.vector.SyncVectorEnv(
         [lambda: gym.make(config["env_name"]) for _ in range(config["K"])]
     )
@@ -61,7 +61,7 @@ def train(config, seed, name):
         "eval_rewards": [],          # Mean reward over 10 episodes
         "eval_lengths": [],          # Mean episode length
         
-        # Trajectories (Section 2.3: "Plot value function on trajectory")
+        # Trajectories 
         "trajectories": []           # Stockage minimal
     }
 
@@ -81,16 +81,9 @@ def train(config, seed, name):
     pbar = tqdm(total=config["max_steps"], desc=f"{name}-seed{seed}")
 
     while total_steps < config["max_steps"]:
-        # Section 3.4: Collect n_steps before update
         for step_in_rollout in range(config["n_steps"]):
             actions, logp, values, entropy = agent.act(states)
             next_states, rewards, terms, truncs, _ = envs.step(actions.cpu().numpy())
-
-            # =========================================================
-            # Section 3.2: STOCHASTIC REWARDS
-            # "mask such that reward is zeroed out with probability 0.9"
-            # Clarification: agents 2, 3, 4 use reward masking
-            # =========================================================
             learn_rewards = rewards.copy()
             if config.get("stochastic_rewards", False):
                 # p=0.9 de zéroer → garde 10%
@@ -105,18 +98,13 @@ def train(config, seed, name):
                 torch.tensor(learn_rewards, dtype=torch.float32, device=device)
             )
             
-            # Section 3.1: Correct bootstrapping
-            # dones = 1.0 SEULEMENT si terminal (pole fell)
-            # dones = 0.0 si truncation (500 steps reached) → on bootstrap
-            dones = terms.astype(float)  # NE PAS inclure truncs!
+            dones = terms.astype(float)  
             agent.dones.append(
                 torch.tensor(dones, dtype=torch.float32, device=device)
             )
 
-            # Section 3.2: "do not include masking in logging"
-            # → Logger les VRAIES récompenses (sans masking)
             for i in range(config["K"]):
-                ep_rewards[i] += rewards[i]  # Vraie récompense
+                ep_rewards[i] += rewards[i] 
                 ep_steps[i] += 1
                 
                 if terms[i] or truncs[i]:
@@ -145,7 +133,7 @@ def train(config, seed, name):
         total_norm = total_norm ** 0.5
 
         # =========================================================
-        # Section 2.3: LOG EACH 1k STEPS
+        # LOG EACH 1k STEPS
         # =========================================================
         if total_steps - last_log >= 1000:
             # Moyenner les épisodes terminés dans cette fenêtre
@@ -173,11 +161,9 @@ def train(config, seed, name):
             last_log = total_steps
 
         # =========================================================
-        # Section 2.3: EVALUATE EVERY 20k STEPS
+        # EVALUATE EVERY 20k STEPS
         # =========================================================
         if total_steps - last_eval >= config["eval_freq"]:
-            # Section 2.3: "Plot value function on one full trajectory"
-            # Stocker trajectoire aux étapes clés pour analyse
             store_traj = (total_steps % 100000 == 0) or \
                         (total_steps >= config["max_steps"] - config["eval_freq"])
             

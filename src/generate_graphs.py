@@ -20,7 +20,7 @@ def load_all_data(results_dir="results"):
     results_path = Path(results_dir)
     
     if not results_path.exists():
-        print(f"❌ Dossier '{results_dir}' introuvable!")
+        print(f"Dossier '{results_dir}' introuvable!")
         return data
     
     for agent_dir in results_path.iterdir():
@@ -788,7 +788,7 @@ def plot_convergence_speed(data, plots_dir, threshold_ratio=0.8):
 
 
 # =========================================================
-# 11. FINAL REWARD PER SEED PER AGENT (échelle adaptative + titre)
+# 11. FINAL REWARD PER SEED PER AGENT 
 # =========================================================
 def plot_final_rewards_per_agent(data, plots_dir, seeds=[42, 123, 999]):
     """Affiche un graphe par agent avec les final rewards par seed,

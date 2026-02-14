@@ -10,10 +10,10 @@ warnings.filterwarnings('ignore')
 class ActorCritic(nn.Module):
     def __init__(self, obs_dim, act_dim, hidden=64):
         super().__init__()
-        # 2 hidden layers (NOT counting output layer) - Section 2.2
+        # 2 hidden layers 
         self.shared = nn.Sequential(
             nn.Linear(obs_dim, hidden),
-            nn.Tanh(),                    # Table 1: Activation = Tanh
+            nn.Tanh(),                    
             nn.Linear(hidden, hidden),
             nn.Tanh(),
         )

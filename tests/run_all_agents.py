@@ -9,7 +9,7 @@ from src.train_multi_seed import train
 # =========================================================
 def main():
     AGENTS = ["agent3"]
-    SEEDS = [42, 123, 999]  # Section 2.3: "at least 3 seeds"
+    SEEDS = [42, 123, 999]  
     CONFIG_DIR = Path("configs")
     
     Path("results").mkdir(exist_ok=True)

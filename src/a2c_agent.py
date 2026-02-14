@@ -3,7 +3,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # =========================================================
-# A2C AGENT - Conforme Figure 2
+# A2C AGENT 
 # =========================================================
 class A2CAgent:
     def __init__(self, model, optimizer, gamma=0.99, entropy_coef=0.01):
@@ -30,14 +30,12 @@ class A2CAgent:
     def compute_returns(self, next_value):
         """
         Calcule n-step returns avec bootstrapping correct
-        Section 3.1: Bootstrap at truncation, NOT at termination
+        Bootstrap at truncation, NOT at termination
         """
-        R = next_value  # Shape: [K]
+        R = next_value 
         returns = []
         
         for r, d in zip(reversed(self.rewards), reversed(self.dones)):
-            # d=1 SEULEMENT si terminal (pole tombé)
-            # d=0 si truncation (500 steps) → on bootstrap
             R = r + self.gamma * R * (1 - d)
             returns.insert(0, R)
         

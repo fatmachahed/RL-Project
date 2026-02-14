@@ -5,7 +5,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # =========================================================
-# EVALUATION - Conforme Section 2.3
+# EVALUATION 
 # =========================================================
 def evaluate(agent, env_name, episodes=10, store_trajectory=False):
     """
