@@ -1,0 +1,19 @@
+# Core
+numpy>=1.24,<2
+pandas>=2.1
+PyYAML>=6.0
+
+# RL & Deep Learning
+torch>=2.1
+gymnasium>=0.30
+
+# Visualization
+matplotlib>=3.7
+seaborn>=0.12
+
+# Utilities
+tqdm>=4.65
+
+# Optional (for better plotting in notebooks)
+ipython>=8.0
+jupyterlab>=4.0
