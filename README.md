@@ -234,15 +234,11 @@ With correct bootstrapping:
 ## 👥 Team
 
 **Author**: Fatma Chahed  and Dhif Aziz 
+
 **Program**: Business Intelligence & Data Science  
 **Institution**: Université Paris Dauphine (Tunis)  
 **Course**: Reinforcement Learning (S.Moalla)  
 **Date**: February 2026
 
 ---
-
-
-
----
-
 **⭐ If you find this project useful, please consider starring it!**
