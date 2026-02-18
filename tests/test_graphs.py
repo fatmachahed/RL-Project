@@ -13,7 +13,8 @@ from src.generate_graphs import *
 # MAIN
 # =========================================================
 def main():
-    PROJECT_ROOT = Path.cwd().parent  
+    # PROJECT_ROOT = Path.cwd().parent  
+    PROJECT_ROOT = Path(__file__).resolve().parents[1]
     plots_dir = create_plots_directory(PROJECT_ROOT)
     
     print(" Chargement des données...")

@@ -8,7 +8,7 @@ from src.train_multi_seed import train
 # MAIN
 # =========================================================
 def main():
-    AGENTS = ["agent3"]
+    AGENTS = ["agent0","agent1","agent2","agent3","agent4"]
     SEEDS = [42, 123, 999]  
     CONFIG_DIR = Path("configs")
     

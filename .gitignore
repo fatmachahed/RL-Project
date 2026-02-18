@@ -17,7 +17,6 @@ results/
 results_ok/
 results_valid/
 *.npz
-*.png
 *.jpg
 
 # OS / éditeurs
